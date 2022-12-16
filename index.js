@@ -1,5 +1,6 @@
 const express = require('express')
 const bodyParser = require('body-parser')
+const https = require("https"), fs = require("fs"), helmet = require("helmet");
 const app = express()
 const db = require('./queries')
 const { Pool, Client } = require('pg')
@@ -20,6 +21,12 @@ const client = new Pool(credentials);
 const port = 3000
 const host = '192.168.1.4'
 
+const options = {
+  key: fs.readFileSync("keys/private_key.pem"),
+  cert: fs.readFileSync("keys/cert.pem")
+};
+
+app.use(helmet());
 app.use(bodyParser.json())
 app.set('view engine', 'ejs')
 app.use(
@@ -29,7 +36,7 @@ app.use(
 )
 
 app.get('/', (request, response) => {
-  response.render("check_appointments", { name: 'João' })
+  response.render("home", { })
   //response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
@@ -57,9 +64,9 @@ app.put('/users/:id', db.updateUser)
 
 app.delete('/users/:id', db.deleteUser)
 
-app.listen(port, host, () => {
-  console.log(`App running on port ${port}.`)
-})
+https.createServer(options, app).listen(4000, ()=>{
+    console.log('server is runing at port 4000')
+});
 
 async function getUserAppointments(id){
   //const id = parseInt(request.params.id)
@@ -70,5 +77,4 @@ async function getUserAppointments(id){
   } catch (err) {
     console.log(err.stack)
   }
-
 }
