@@ -9,9 +9,9 @@ const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
 const methodOverride = require('method-override')
-const  user  =  require("./routes/users");
 const { getUserAppointments } = require("./aux")
-const {register} = require("./register")
+const { register } = require("./register")
+const { login } = require("./login")
 
 app.set('view-engine', 'ejs')
 app.use(express.urlencoded({ extended: false }))
@@ -28,9 +28,6 @@ app.use(methodOverride('_method'))
 const port = 3000
 const host = '192.168.1.4'
 
-
-//app.use("/user",  user);  //Route for /user endpoint of API
-
 const options = {
   key: fs.readFileSync("keys/private_key.pem"),
   cert: fs.readFileSync("keys/cert.pem")
@@ -41,13 +38,23 @@ app.use(bodyParser.json())
 app.set('view engine', 'ejs')
 
 app.get('/', (request, response) => {
-  response.render("register", { })
+  response.render("home", { })
   //response.json({ info: 'Node.js, Express, and Postgres API' })
 })
 
 app.get('/users', db.getUsers)
 
+app.get('/register', (request, response) => {
+  response.render("register", { })
+})
+
 app.post('/register', register);
+
+app.get('/login', (request, response) => {
+  response.render("login", { })
+})
+
+app.post('/login', login);
 
 app.get('/user/appointments/:id', (request, response) => {
   const id = parseInt(request.params.id)

@@ -7,7 +7,8 @@ const  jwt  =  require("jsonwebtoken");
 //Registration Function
 
 exports.register  =  async (req, res) => {
-	const { email, password } =  req.body;
+	const { name, email, password } =  req.body;
+	console.log('Name: ' + name + ' email: ' + email + ' password: ' + password)
 	try {
 		const  data  =  await client.query(`SELECT * FROM users WHERE email= $1;`, [email]); //Checking if user already exists
 		const  arr  =  data.rows;
@@ -23,6 +24,7 @@ exports.register  =  async (req, res) => {
 						error: "Server error",
 					});
 				const  user  = {
+					name,
 					email,
 					password: hash,
 				};
@@ -31,7 +33,7 @@ exports.register  =  async (req, res) => {
 				//Inserting data into the database
 
 				client
-				.query(`INSERT INTO users (email, password) VALUES ($1,$2);`, [user.email, user.password], (err) => {
+				.query(`INSERT INTO users (name, email, password) VALUES ($1,$2,$3);`, [user.name, user.email, user.password], (err) => {
 
 					if (err) {
 						flag  =  0; //If user is not inserted is not inserted to database assigning flag as 0/false.
@@ -42,7 +44,7 @@ exports.register  =  async (req, res) => {
 					}
 					else {
 						flag  =  1;
-						res.status(200).send({ message: 'User added to database, not verified' });
+						res.redirect('/');
 					}
 				})
 			
