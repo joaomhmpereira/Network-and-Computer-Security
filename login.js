@@ -28,10 +28,7 @@ exports.login = async (req, res) => {
 				},
 				process.env.SECRET_KEY
 			);
-				res.status(200).json({
-					message: "User signed in!",
-					token: token,
-				});
+				res.status(200).cookie('token', token).redirect('/');
 			}
 		else {
 			//Declaring the errors
