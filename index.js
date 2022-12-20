@@ -9,6 +9,7 @@ const flash = require('express-flash')
 const session = require('express-session')
 const aux = require("./aux")
 const { register } = require("./register")
+const { accessLogger, errorLogger } = require("./logger");
 
 // passport configuration
 const initializePassport = require('./passport-config')
@@ -17,7 +18,6 @@ initializePassport(
   aux.getUserByEmail,
   aux.getUserById
 )
-
 
 app.use(express.urlencoded({ extended: false }))
 // use flash for error messages
@@ -36,7 +36,7 @@ app.use(session({
 app.use(passport.initialize())
 app.use(passport.session())
 
-const port = 3000
+const PORT = 4000
 const host = '192.168.1.4'
 
 // read private key and certificate for https
@@ -71,6 +71,7 @@ app.get('/login', checkNotAuthenticated, (request, response) => {
 })
 
 // login users fucntionality
+// dava jeito conseguir dar log dos users que dao login
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
   successRedirect: '/user/appointments',  // login successful -> redirect to appointments
   failureRedirect: '/login',              // login unsuccessful -> redirect to login again
@@ -81,6 +82,7 @@ app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
 app.get('/user/appointments/', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     const id = user.id
+    accessLogger.info("User '" + id + "' (" + user.email + ") accessed /user/appointments")
     var appointments = aux.getUserAppointments(id)
                        .then(appointments => { return appointments || []});
   
@@ -123,6 +125,7 @@ function checkNotAuthenticated(request, response, next) {
 }
 
 // create server
-https.createServer(options, app).listen(4000, ()=>{
-    console.log('server is runing at port 4000')
+https.createServer(options, app).listen(PORT, ()=>{
+    accessLogger.info(`Successfuly started HTTPS server on port ${PORT}`);
+    console.log(`server is runing at port ${PORT}`)
 });
