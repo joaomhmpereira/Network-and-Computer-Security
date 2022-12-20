@@ -2,19 +2,15 @@ const express = require('express')
 const bodyParser = require('body-parser')
 const https = require("https"), fs = require("fs"), helmet = require("helmet");
 const app = express()
-const db = require('./queries')
 const client = require("./configs/database");
 const bcrypt = require('bcrypt')
-const cookieParser = require("cookie-parser");
 const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
-const methodOverride = require('method-override')
-
 const aux = require("./aux")
 const { register } = require("./register")
-const { login } = require("./login")
 
+// passport configuration
 const initializePassport = require('./passport-config')
 initializePassport(
   passport,
@@ -22,10 +18,11 @@ initializePassport(
   aux.getUserById
 )
 
-app.set('view-engine', 'ejs')
+
 app.use(express.urlencoded({ extended: false }))
+// use flash for error messages
 app.use(flash())
-app.use(cookieParser())
+// session configuration
 app.use(session({
   secret: process.env.SESSION_SECRET,
   resave: false,
@@ -38,45 +35,49 @@ app.use(session({
 }))
 app.use(passport.initialize())
 app.use(passport.session())
-app.use(methodOverride('_method'))
 
 const port = 3000
 const host = '192.168.1.4'
 
+// read private key and certificate for https
 const options = {
   key: fs.readFileSync("keys/private_key.pem"),
   cert: fs.readFileSync("keys/cert.pem")
 };
 
+// set EJS as view engine
+app.set('view engine', 'ejs')
 app.use(helmet());
 app.use(bodyParser.json())
-app.set('view engine', 'ejs')
 
+// load homepage
 app.get('/', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    console.log('user: ')
-    console.log(user)
-    console.log('name: ' + user.name)
     response.render('home', { name: user.name })
   })
 })
 
+// load register page
 app.get('/register', checkNotAuthenticated, (request, response) => {
   response.render("register", { })
 })
 
+// register users actual functionality
 app.post('/register', checkNotAuthenticated, register);
 
+// render login page
 app.get('/login', checkNotAuthenticated, (request, response) => {
   response.render("login")
 })
 
+// login users fucntionality
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
-  successRedirect: '/user/appointments',
-  failureRedirect: '/login',
-  failureFlash: true
+  successRedirect: '/user/appointments',  // login successful -> redirect to appointments
+  failureRedirect: '/login',              // login unsuccessful -> redirect to login again
+  failureFlash: true                      // if login is unsuccessful display error message
 }));
 
+// load appointments page
 app.get('/user/appointments/', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     const id = user.id
@@ -84,31 +85,44 @@ app.get('/user/appointments/', checkAuthenticated, (request, response) => {
                        .then(appointments => { return appointments || []});
   
     appointments.then(function(result){
-      console.log(result);
       response.render("check_appointments", { name: user.name, data: result })
     })  
   })
-  
 })
 
+// log user out
+app.get('/logout', checkAuthenticated, function(request, response, next) {
+  request.logout(function(err) {
+    if (err) { return next(err); }
+    response.redirect('/login');
+  });
+})
+
+/**
+ * Function to check if user is authenticated
+ * if user is authenticated -> allow operation
+ * otherwise, redirect user to login page
+ */
 function checkAuthenticated(request, response, next) {
   if(request.isAuthenticated()) {
-    console.log('user is authenticated')
     return next()
   }
-  console.log('user is not authenticated')
   response.redirect('/login')
 }
 
+/**
+ * Function to check if user is not authenticated
+ * if user is authenticated -> redirect to homepage
+ * otherwise, allow operation
+ */
 function checkNotAuthenticated(request, response, next) {
   if (request.isAuthenticated()) {
-    console.log('user is authenticated')
     return response.redirect('/')
   }
-  console.log('user is not authenticated')
   next()
 }
 
+// create server
 https.createServer(options, app).listen(4000, ()=>{
     console.log('server is runing at port 4000')
 });

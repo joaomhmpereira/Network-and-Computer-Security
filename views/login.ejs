@@ -25,6 +25,9 @@
     <div>
       <h1 class="h3 mb-3 fw-normal">Sign in</h1>
     </div>
+    <% if (messages.error) { %>
+      <p class="mt-5 mb-3" style="color: red;">Error: <%= messages.error %></p>
+    <% } %>
     <main class="form-signin">
       <form action="/login" method="POST">
         <div class="form-floating">
