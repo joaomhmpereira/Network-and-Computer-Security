@@ -145,5 +145,4 @@ function checkNotAuthenticated(request, response, next) {
 // create server
 https.createServer(options, app).listen(PORT, ()=>{
     fo_accessLogger.info(`Successfuly started HTTPS server on port ${PORT}`);
-    console.log(`server is runing at port ${PORT}`)
 });

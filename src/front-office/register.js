@@ -1,7 +1,5 @@
 const bcrypt = require("bcrypt");
 const client  =  require("./configs/database");
-const { generateKeyPair } = require("crypto");
-const fs = require("fs");
 const { fo_accessLogger, fo_errorLogger } = require("./logger");
 
 //Registration Function

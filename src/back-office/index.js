@@ -53,17 +53,16 @@ app.set('view engine', 'ejs')
 app.use(helmet());
 app.use(bodyParser.json())
 
-// load homepage
-app.get('/', checkAuthenticated, (request, response) => {
-  request.user.then(function(user){
-    response.render('home', { name: user.name })
-  })
-})
+/**
+ * MANTER AS FUNCIONALIDADES DE REGISTER APENAS PARA FACILITAR INSERIR DOCTORS NA BD
+ * depois tiramos, nao faz muito sentido dar para registar novos medicos assim no site 
+ */
 
 // load register page
 app.get('/register', checkNotAuthenticated, (request, response) => {
   response.render("register", { })
 })
+
 
 // register users actual functionality
 app.post('/register', checkNotAuthenticated, register);
@@ -73,27 +72,19 @@ app.get('/login', checkNotAuthenticated, (request, response) => {
   response.render("login")
 })
 
+app.get('/doctor/profile', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    response.render('profile', { name: user.name })
+  })
+})
+
 // login users fucntionality
 // dava jeito conseguir dar log dos users que dao login
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
-  successRedirect: '/user/appointments',  // login successful -> redirect to appointments
+  successRedirect: '/doctor/profile',  // login successful -> redirect to appointments
   failureRedirect: '/login',              // login unsuccessful -> redirect to login again
   failureFlash: true                      // if login is unsuccessful display error message
 }));
-
-// load appointments page
-app.get('/user/appointments/', checkAuthenticated, (request, response) => {
-  request.user.then(function(user){
-    const id = user.id
-    bo_accessLogger.info("User '" + id + "' (" + user.email + ") accessed /user/appointments")
-    var appointments = aux.getUserAppointments(id)
-                       .then(appointments => { return appointments || []});
-  
-    appointments.then(function(result){
-      response.render("check_appointments", { name: user.name, data: result })
-    })  
-  })
-})
 
 // log user out
 app.get('/logout', checkAuthenticated, function(request, response, next) {
@@ -122,7 +113,7 @@ function checkAuthenticated(request, response, next) {
  */
 function checkNotAuthenticated(request, response, next) {
   if (request.isAuthenticated()) {
-    return response.redirect('/')
+    return response.redirect('/doctor/profile')
   }
   next()
 }
@@ -130,5 +121,4 @@ function checkNotAuthenticated(request, response, next) {
 // create server
 https.createServer(options, app).listen(PORT, ()=>{
     bo_accessLogger.info(`Successfuly started HTTPS server on port ${PORT}`);
-    console.log(`server is runing at port ${PORT}`)
 });

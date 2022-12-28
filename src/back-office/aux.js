@@ -1,17 +1,8 @@
 const client = require("../front-office/configs/database");
 
-async function getUserAppointments(id){
-  try {
-    const res = await client.query('SELECT * FROM appointments WHERE patient_id = $1', [id])
-    return res.rows;
-  } catch (err) {
-    console.log(err.stack)
-  }
-}
-
 async function getUserByEmail(email){
   try {
-    const res = await client.query('SELECT * FROM users WHERE email = $1', [email])
+    const res = await client.query('SELECT * FROM doctors WHERE email = $1', [email])
     if(res.rows.length != 0) {
       const user = {
         id: res.rows[0].id,
@@ -31,7 +22,7 @@ async function getUserByEmail(email){
 
 async function getUserById(id){
   try {
-    const res = await client.query('SELECT * FROM users WHERE id = $1', [id])
+    const res = await client.query('SELECT * FROM doctors WHERE id = $1', [id])
     if(res.rows.length != 0) {
       const user = {
         id: res.rows[0].id,
@@ -49,7 +40,6 @@ async function getUserById(id){
 }
 
 module.exports = {
-  getUserAppointments,
   getUserByEmail,
   getUserById
 }
