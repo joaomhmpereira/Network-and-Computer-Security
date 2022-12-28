@@ -15,7 +15,6 @@
 
       <ul class="nav nav-pills">
         <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Profile</a></li>
         <li class="nav-item"><a href="#" class="nav-link">Contacts</a></li>
         <li class="nav-item"><a href="/login" class="nav-link">Sign in</a></li>
       </ul>
@@ -23,13 +22,17 @@
   </div>
   <div class="container">
     <div>
-      <h1 class="h3 mb-3 fw-normal">Register new user</h1>
+      <h1 class="mb-3 fw-normal text-center">Register new user</h1>
     </div>
     <main class="form-signin">
       <form action="/register" method="POST">
         <div class="form-floating">
           <input type="text" class="form-control" id="floatingInput" name="name" placeholder="Enter your name" required>
           <label for="floatingInput">Name
+        </div>
+        <div class="form-floating">
+          <input type="text" class="form-control" id="floatingInput" name="cc" placeholder="Enter your citizen card number" required>
+          <label for="floatingInput">CC Number
         </div>
         <div class="form-floating">
           <input type="email" class="form-control" id="floatingInput" name="email" placeholder="Enter your email" required>
@@ -39,9 +42,11 @@
           <input type="password" class="form-control" id="floatingPassword" name="password" placeholder="Enter your password" required>
           <label for="floatingPassword">Password</label>
         </div>
-
         <button class="mt-2 w-100 btn btn-lg btn-primary" type="submit">Register</button>
-        <p class="mt-5 mb-3 text-muted">&copy; SAH Healthcare 2020-2023</p>
+        <div class="text-center">
+          <p class="mt-5 lead">Already a member? <a href="/login">Sign in</a></p>
+        </div>
+        <p class="mt-5 mb-3 text-muted text-center">&copy; SAH Healthcare 2020-2023</p>
       </form>
     </main>
   </div>

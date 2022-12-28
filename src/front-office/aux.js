@@ -11,15 +11,15 @@ async function getUserAppointments(id){
 
 async function getUserByEmail(email){
   try {
-    const res = await client.query('SELECT * FROM users WHERE email = $1', [email])
+    const res = await client.query('SELECT * FROM patients WHERE email = $1', [email])
     if(res.rows.length != 0) {
       const user = {
         id: res.rows[0].id,
+        cc: res.rows[0].user_cc,
         name: res.rows[0].name,
         email: res.rows[0].email,
         password: res.rows[0].password 
       }
-      console.log(user)
       return user;
     } else {
       return null;
@@ -31,10 +31,11 @@ async function getUserByEmail(email){
 
 async function getUserById(id){
   try {
-    const res = await client.query('SELECT * FROM users WHERE id = $1', [id])
+    const res = await client.query('SELECT * FROM patients WHERE id = $1', [id])
     if(res.rows.length != 0) {
       const user = {
         id: res.rows[0].id,
+        cc: res.rows[0].user_cc,
         name: res.rows[0].name,
         email: res.rows[0].email,
         password: res.rows[0].password 

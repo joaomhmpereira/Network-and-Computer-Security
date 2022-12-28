@@ -54,10 +54,8 @@ app.use(helmet());
 app.use(bodyParser.json())
 
 // load homepage
-app.get('/', checkAuthenticated, (request, response) => {
-  request.user.then(function(user){
-    response.render('home', { name: user.name })
-  })
+app.get('/', (request, response) => {
+  response.render('home')
 })
 
 // load register page
@@ -82,23 +80,40 @@ app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
 }));
 
 // load appointments page
-app.get('/user/appointments/', checkAuthenticated, (request, response) => {
+app.get('/user/appointments', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     const id = user.id
-    fo_accessLogger.info("User '" + id + "' (" + user.email + ") accessed /user/appointments")
+    fo_accessLogger.info("User '" + id + "' (" + user.email + ") accessed /user/appointments.")
     var appointments = aux.getUserAppointments(id)
                        .then(appointments => { return appointments || []});
   
     appointments.then(function(result){
-      response.render("check_appointments", { name: user.name, data: result })
+      response.render("appointments", { name: user.name, data: result })
     })  
+  })
+})
+
+// load results page
+app.get('/user/results', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    response.render("results", { name: user.name })
+  })
+})
+
+// load profile page
+app.get('/user/profile', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    response.render("profile", { name : user.name })
   })
 })
 
 // log user out
 app.get('/logout', checkAuthenticated, function(request, response, next) {
+  request.user.then(function(user){
+    fo_accessLogger.info("User '" + user.id + "' (" + user.email + ") logged out.")
+  })
   request.logout(function(err) {
-    if (err) { return next(err); }
+    if (err) { return next(err); }    
     response.redirect('/login');
   });
 })

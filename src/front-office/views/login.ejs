@@ -15,7 +15,6 @@
 
       <ul class="nav nav-pills">
         <li class="nav-item"><a href="/" class="nav-link">Home</a></li>
-        <li class="nav-item"><a href="#" class="nav-link">Profile</a></li>
         <li class="nav-item"><a href="#" class="nav-link">Contacts</a></li>
         <li class="nav-item"><a href="/login" class="nav-link active" aria-current="page">Sign in</a></li>
       </ul>
@@ -23,7 +22,7 @@
   </div>
   <div class="container">
     <div>
-      <h1 class="h3 mb-3 fw-normal">Sign in</h1>
+      <h1 class="mb-3 fw-normal text-center">Sign in</h1>
     </div>
     <% if (messages.error) { %>
       <p class="mt-5 mb-3" style="color: red;">Error: <%= messages.error %></p>
@@ -40,7 +39,11 @@
         </div>
 
         <button class="mt-2 w-100 btn btn-lg btn-primary" type="submit">Sign in</button>
-        <p class="mt-5 mb-3 text-muted">&copy; SAH Healthcare 2020-2023</p>
+        <!-- Register buttons -->
+        <div class="text-center">
+          <p class="mt-5 lead">Not a member? <a href="/register">Register</a></p>
+        </div>
+        <p class="mt-5 mb-3 text-muted text-center">&copy; SAH Healthcare 2020-2023</p>
       </form>
     </main>
   </div>
