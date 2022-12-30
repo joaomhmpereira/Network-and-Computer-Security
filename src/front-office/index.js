@@ -7,9 +7,11 @@ const helmet = require("helmet")
 const app = express()
 const client = require("./configs/database")
 const bcrypt = require('bcrypt')
+const crypto = require('crypto')
 const passport = require('passport')
 const flash = require('express-flash')
 const session = require('express-session')
+const axios = require('axios')
 const aux = require("./aux")
 const { register } = require("./register")
 const { fo_accessLogger, fo_errorLogger } = require("./logger")
@@ -41,10 +43,12 @@ app.use(passport.session())
 
 const PORT = 8080
 const host = '192.168.1.4'
+const hospitalPrivKey = fs.readFileSync("../utils/keys/private_key.pem")
+const hospitalPubKey = fs.readFileSync("../utils/keys/public.key")
 
 // read private key and certificate for https
 const options = {
-  key: fs.readFileSync("../utils/keys/private_key.pem"),
+  key: hospitalPrivKey,
   cert: fs.readFileSync("../utils/keys/cert.pem")
 };
 
@@ -55,6 +59,18 @@ app.use(bodyParser.json())
 
 // load homepage
 app.get('/', (request, response) => {
+  var res = axios.get('http://192.168.1.4:5000/test')
+        .then(res => { return res || [] })
+        .catch(error => { return error });
+  res.then(function(result){
+    //console.log(result.data)
+    const verification = aux.processResult(result.data) 
+    if(verification != false){
+      aux.storeResult(result.data, verification)
+    } else {
+      console.log("verification failed")
+    }
+  })
   response.render('home')
 })
 
