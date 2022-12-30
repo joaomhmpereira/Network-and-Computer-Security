@@ -61,7 +61,7 @@ function processResult(result){
   const b64EncodedResult = result.Result
   const b64EncodedPatientID = result.PatientID
   const signature = result.LabSignature
-  var keyname = labName.toLowerCase().replace(/\s/g, '_')
+  var keyname = labName.toLowerCase().replace(/\s/g, '_') 
 
   const labKeyPath = `../utils/keys/labs/${keyname}/${keyname}_public_key.pem`
   const labPubKey = fs.readFileSync(labKeyPath, "utf-8")
