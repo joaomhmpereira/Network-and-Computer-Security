@@ -18,6 +18,7 @@ const { fo_accessLogger, fo_errorLogger } = require("./logger")
 
 // passport configuration
 const initializePassport = require('./passport-config')
+const { response } = require('express')
 initializePassport(
   passport,
   aux.getUserByEmail,
@@ -66,7 +67,12 @@ app.get('/', (request, response) => {
     //console.log(result.data)
     const verification = aux.processResult(result.data) 
     if(verification != false){
-      aux.storeResult(result.data, verification)
+      // stores the analysis in the dataBase
+      // should return the id of the analysis
+      var analysis_id = aux.storeResult(result.data, verification)
+      var analysis_id_string = analysis_id.toString()
+      // know we add the analysis to the permissions.
+      aux.storeAnalysisPermissionsUser(analysis_id_string, verification)
     } else {
       console.log("verification failed")
     }
@@ -122,6 +128,34 @@ app.get('/user/profile', checkAuthenticated, (request, response) => {
     response.render("profile", { name : user.name })
   })
 })
+
+/**
+ * get for user's analysis, we should be able to see every analysis for him
+ * checks if the user is authenticated to allow
+ * 
+ * TODO: add a buton to go to /user/analysis/permissions
+ */
+app.get('/user/analysis', checkAuthenticated, (request, response) => {
+  // sacamos todas as análises que pertencem ao cabrao
+  request.user.then(function(user){
+    // sacar as análises todas usando um select ... WHERE id = (id do user cifrado)
+    // colocar essas análises numa lista
+    // mandar para o render.
+  })
+})
+
+/**
+ * here the client can give the doctor's permissions to see they're analysis
+ */
+app.get('/user/analysis/permissions', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    // ele insere a analise
+    // insere o medico 
+    // atualizamos a base de dados das permissoes 
+    // para o id da analise adicionamos ao texto o id do medico.
+  })
+})
+
 
 // log user out
 app.get('/logout', checkAuthenticated, function(request, response, next) {
