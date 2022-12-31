@@ -67,12 +67,16 @@ app.get('/', (request, response) => {
     //console.log(result.data)
     const verification = aux.processResult(result.data) 
     if(verification != false){
-      // stores the analysis in the dataBase
-      // should return the id of the analysis
-      var analysis_id = aux.storeResult(result.data, verification)
-      var analysis_id_string = analysis_id.toString()
-      // know we add the analysis to the permissions.
-      aux.storeAnalysisPermissionsUser(analysis_id_string, verification)
+      // stores the analysis and the permissions of the user
+      aux.storeResult(result.data, verification)
+        .then(response => { 
+          console.log(response)
+          var analysis_id_string = response.toString()
+          aux.storeAnalysisPermissionsUser(analysis_id_string, verification, 'patients')
+        })
+        .catch(error => {
+          console.error(error)
+        }) 
     } else {
       console.log("verification failed")
     }
@@ -129,6 +133,7 @@ app.get('/user/profile', checkAuthenticated, (request, response) => {
   })
 })
 
+
 /**
  * get for user's analysis, we should be able to see every analysis for him
  * checks if the user is authenticated to allow
@@ -136,13 +141,13 @@ app.get('/user/profile', checkAuthenticated, (request, response) => {
  * TODO: add a buton to go to /user/analysis/permissions
  */
 app.get('/user/analysis', checkAuthenticated, (request, response) => {
-  // sacamos todas as análises que pertencem ao cabrao
   request.user.then(function(user){
-    // sacar as análises todas usando um select ... WHERE id = (id do user cifrado)
-    // colocar essas análises numa lista
-    // mandar para o render.
+    let num = 1
+    let num_string = num.toString()
+    aux.getAnalysisPermissions(num_string)
   })
 })
+
 
 /**
  * here the client can give the doctor's permissions to see they're analysis

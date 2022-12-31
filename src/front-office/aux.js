@@ -1,6 +1,7 @@
 const client = require("./configs/database");
 const fs = require('fs')
 const crypto = require('crypto')
+const axios = require('axios')
 const { fo_accessLogger, fo_errorLogger } = require("./logger");
 
 
@@ -22,6 +23,7 @@ async function encryptWithHospitalPublicKey(text){
 		padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
     oaepHash: 'sha256'
 	}, text)
+  console.log(encryptedText)
 	const b64EncodedText = encryptedText.toString('base64')
   return b64EncodedText
 }
@@ -56,7 +58,9 @@ async function decryptWithHospitalPublicKey(encoded_text){
  */
 async function getAnalysisPermissions(analysis_id){
   try{
-    const res = await client.query('SELECT * FROM permissions WHERE id = $1', [analysis_id])
+    let analysis_id_encripted = encryptWithHospitalPublicKey(analysis_id)
+    console.log(analysis_id_encripted)
+    const res = await client.query('SELECT * FROM permissions WHERE id = $1', [analysis_id_encripted])
     return res.rows;
   } catch(err){
     console.log(err.stack)
@@ -117,47 +121,59 @@ function processResult(result){
 /**
  * stores the encrypted payload of the analysis in it's according table
  * TODO: This should return the analysis ID.
+ * TODO: FIX THE RETURN BUG
  * 
  * @param {*} result 
  * @param {*} patientId 
  * @returns analysisId
  */
 async function storeResult(result, patientId){
-  console.log("patient id: " + patientId)
-  //Inserting data into the database
-  const analysis_id = await client.query(`INSERT INTO analysis (id, lab_name, result, signature) VALUES ($1,$2,$3,$4);`, 
-                              [result.PatientID, result.Lab, result.Result, result.LabSignature], (err) => {
-    if (err) {
-      console.error(err);
-      return 0
-    }
-    else {
-      console.log("Analysis id: " + analysis_id);
-      fo_accessLogger.info(`Stored analysis result for user ${patientId} from Lab ${result.Lab}.`)
-      return 1
-    }
-  })
+  try{
+    console.log("patient id: " + patientId)
+    //Inserting data into the database
+    client.query(`INSERT INTO analysis (id, lab_name, result, signature) VALUES ($1,$2,$3,$4);`, 
+                                [result.PatientID, result.Lab, result.Result, result.LabSignature], (err) => {
+      if (err) {
+        console.error(err);
+      }
+      else {
+        fo_accessLogger.info(`Stored analysis result for user ${patientId} from Lab ${result.Lab}.`)
+
+      }
+    })
+    return 1 // fixed the bug for now
+  }catch(err){
+    console.error(err.stack)
+  }
 }
 
 
 /**
  * TODO: This should be encrypted with the public key of the hospital 
+ * TODO: check if it holds up with more analysis
  * 
  * @param {*} analysis_id 
  * @param {*} user_id 
  */
-async function storeAnalysisPermissionsUser(analysis_id, user_id){
-  console.log("patient id: "+ user_id)
-  client.query('INSERT INTO permissions (id, user_id) VALUES ($1, $2);', [analysis_id, user_id], (err) => {
-    if (err) {
-      console.error(err);
-      return false
+async function storeAnalysisPermissionsUser(analysis_id, user_id, table){
+  console.log("storing permissions in user: "+ user_id)
+  try{
+    console.log(analysis_id)
+    let permsUser = await client.query('SELECT permissions FROM patients WHERE id = $1;', [user_id])
+    console.log(permsUser.rows)
+
+    if(permsUser.rows.length != 0){ 
+      var decryptedPermsUser = await decryptWithHospitalPublicKey(permsUser.rows.permissions) 
     }
-    else {
-      fo_accessLogger.info(`Stored permissions for analysis ${analysis_id} from user ${user_id}.`)
-      return true
-    }
-  })
+    else { var decryptedPermsUser = "" }
+    
+    let newPermsUser = decryptedPermsUser + "-" + analysis_id
+    let newPermsUserEncrypted = await encryptWithHospitalPublicKey(newPermsUser)
+
+    client.query('UPDATE $1 SET permissions = $2 WHERE id = $3;', [table, newPermsUserEncrypted, user_id])
+  } catch (error) {
+    console.error(error)
+  }
 }
 
 
@@ -169,7 +185,7 @@ async function storeAnalysisPermissionsUser(analysis_id, user_id){
  */
 async function storeAnalysisPermissionsDoctor(analysis_id, doctor_id){
   if(checkIfDoctorExists(doctor_id)){
-    storeAnalysisPermissionsDoctor(analysis_id, doctor_id)
+    storeAnalysisPermissionsUser(analysis_id, doctor_id, 'doctors')
     return true
   } else{
     return false
