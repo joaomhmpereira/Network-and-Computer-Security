@@ -23,10 +23,13 @@
   </div>
   <div class="container">
   	<div>
-  		<h1>
+  		<h1 class="mt-5 fw-normal">
   			<%= name %>'s Appointments
   		</h1>
   	</div>
+    <% if (data.length == 0) { %>
+      <h3 class="mt-5 lead text-center">You have no scheduled appointments.</h3>
+    <% } else { %>
   	<table class="table table-hover">
   		<thead>
   			<tr>
@@ -45,5 +48,6 @@
             <% } %>
   		</tbody>
   	</table>
+    <% } %>
   </div>
 </body>

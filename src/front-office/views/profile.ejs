@@ -23,10 +23,42 @@
   </div>
   <div class="container">
   	<div>
-  		<h1>
-  			<%= name %>'s Profile
+  		<h1 class="mt-5 fw-normal">
+  			<%= user.name %>'s Profile
   		</h1>
   	</div>
-  	</table>
+    <div class="h-100 d-flex align-items-center justify-content-center mt-5">
+  	<div class="col-lg-8 text-center">
+      <div class="card mb-4">
+        <div class="card-body">
+          <div class="row">
+            <div class="col-sm-3">
+              <p class="mb-0">Full Name</p>
+            </div>
+            <div class="col-sm-9">
+              <p class="text-muted mb-0"><%= user.name %></p>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-sm-3">
+              <p class="mb-0">Citizen Card Nº</p>
+            </div>
+            <div class="col-sm-9">
+              <p class="text-muted mb-0"><%= user.cc %></p>
+            </div>
+          </div>
+          <hr>
+          <div class="row">
+            <div class="col-sm-3">
+              <p class="mb-0">Email</p>
+            </div>
+            <div class="col-sm-9">
+              <p class="text-muted mb-0"><%= user.email %></p>
+            </div>
+          </div>
+      </div>
+    </div>
+  </div>
   </div>
 </body>
