@@ -19,6 +19,7 @@ const { fo_accessLogger, fo_errorLogger } = require("./logger")
 // passport configuration
 const initializePassport = require('./passport-config')
 const { response } = require('express')
+const { render } = require('ejs')
 initializePassport(
   passport,
   aux.getUserByEmail,
@@ -60,27 +61,7 @@ app.use(bodyParser.json())
 
 // load homepage
 app.get('/', (request, response) => {
-  var res = axios.get('http://192.168.1.4:5000/test')
-        .then(res => { return res || [] })
-        .catch(error => { return error });
-  res.then(function(result){
-    //console.log(result.data)
-    const verification = aux.processResult(result.data) 
-    if(verification != false){
-      // stores the analysis and the permissions of the user
-      aux.storeResult(result.data, verification)
-        .then(response => { 
-          console.log(response)
-          var analysis_id_string = response.toString()
-          aux.storeAnalysisPermissionsUser(analysis_id_string, verification, 'patients')
-        })
-        .catch(error => {
-          console.error(error)
-        }) 
-    } else {
-      console.log("verification failed")
-    }
-  })
+  //aux.askUpdateFromLab()
   response.render('home')
 })
 
@@ -119,12 +100,6 @@ app.get('/user/appointments', checkAuthenticated, (request, response) => {
   })
 })
 
-// load results page
-app.get('/user/results', checkAuthenticated, (request, response) => {
-  request.user.then(function(user){
-    response.render("results", { name: user.name })
-  })
-})
 
 // load profile page
 app.get('/user/profile', checkAuthenticated, (request, response) => {
@@ -135,17 +110,42 @@ app.get('/user/profile', checkAuthenticated, (request, response) => {
 
 
 /**
- * get for user's analysis, we should be able to see every analysis for him
- * checks if the user is authenticated to allow
+ * For the render pass only h@ analysis in a list
  * 
- * TODO: add a buton to go to /user/analysis/permissions
+ * TODO: add a button to go to /user/analysis/permissions
+ * TODO: add a button to go to /user/analysis/
  */
 app.get('/user/analysis', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    let num = 1
-    let num_string = num.toString()
-    aux.getAnalysisPermissions(num_string)
+    aux.showListAnalysisFromUser(user.id)
+    .then(result => {
+      response.render("analysis", {user: user, data: result})
+    })
+    .catch(error => {
+      console.error(error)
+    })
   })
+})
+
+app.get('/user/analysis/update', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    aux.askUpdateFromLab()
+    .then(result => {
+      response.redirect('/user/analysis')
+    })
+    .catch(error => {
+      console.error(error)
+    })
+  })
+})
+
+app.get('/user/analysis/permissions', checkAuthenticated, (request, response) => {
+  response.render('permissions')
+})
+
+app.post('/user/analysis/permissions', checkAuthenticated, (request, response) => {
+  // const { name, cc, email, password } =  req.body;
+  // console.log(req.body)
 })
 
 
@@ -154,10 +154,13 @@ app.get('/user/analysis', checkAuthenticated, (request, response) => {
  */
 app.get('/user/analysis/permissions', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    // ele insere a analise
-    // insere o medico 
-    // atualizamos a base de dados das permissoes 
-    // para o id da analise adicionamos ao texto o id do medico.
+    aux.checkIfHasAccessToAnalysis(1, user.id)
+    .then(response => {
+      console.log("response: " + response)
+    })
+    .catch(error => {
+      console.error(error)
+    })
   })
 })
 
@@ -192,7 +195,7 @@ function checkAuthenticated(request, response, next) {
  */
 function checkNotAuthenticated(request, response, next) {
   if (request.isAuthenticated()) {
-    return response.redirect('/')
+    return response.redirect('/user/appointments')
   }
   next()
 }
