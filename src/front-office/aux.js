@@ -123,7 +123,7 @@ async function addAnalysisToPermissions(analysis_id, user_id, table){
 async function askUpdateFromLab(){
   try{
     var result = await axios.get('http://192.168.1.4:5000/test')
-    var verification = processResult(result.data)
+    var verification = processResult(result.data) // true if it all works out
     if(verification != false){
       var response = await storeResult(result.data, verification)
       console.log(response)
@@ -151,6 +151,7 @@ function processResult(result){
   const b64EncodedResult = result.Result
   const b64EncodedPatientID = result.PatientID
   const signature = result.LabSignature
+
   var keyname = labName.toLowerCase().replace(/\s/g, '_') 
 
   const labKeyPath = `../utils/keys/labs/${keyname}/${keyname}_public_key.pem`
@@ -169,12 +170,6 @@ function processResult(result){
     return false
   
   } else {
-    //const decryptedResult = crypto.privateDecrypt({
-    //  key: hospitalPrivKey,
-    //  padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
-    //  oaepHash: 'sha256'
-    //}, Buffer.from(b64EncodedResult, 'base64')).toString()
-
     const decryptedPatientID = crypto.privateDecrypt({
       key: hospitalPrivKey,
       padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
@@ -182,8 +177,6 @@ function processResult(result){
     }, Buffer.from(b64EncodedPatientID, 'base64')).toString()
 
     fo_accessLogger.info(`Verified analysis result for user ${decryptedPatientID} from Lab ${labName}`)
-    //console.log("Decrypted Patient ID: " + decryptedPatientID)
-    //console.log("Decrypted Result: " + decryptedResult)
     return decryptedPatientID
   }
 }

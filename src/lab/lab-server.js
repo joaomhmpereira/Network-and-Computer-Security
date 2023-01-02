@@ -16,9 +16,13 @@ const labName = 'Joaquim Chaves'
 
 const test = {"result": "encryptedResult.toString('base64')" }
 
+
+/**
+ * CAROLINA TODO: prepareResult("id que vier do pedido")
+ */
 app.get('/test', (request, response) => {
 	console.log('[LAB SERVER] Received request for /test')
-	const result = prepareResult(1)
+	const result = prepareResult(1) // just for user 1
 	response.status(200).send(result)
 })
 
