@@ -52,8 +52,8 @@ async function decryptWithHospitalPublicKey(encoded_text){
  * @param {*} user_id 
  * @returns true/false
  */
-async function checkIfHasAccessToAnalysis(analysis_id, user_id){
-  var permsUserEncrypted = await getUserPermissions(user_id)
+async function checkIfHasAccessToAnalysis(analysis_id, user_id, table){
+  var permsUserEncrypted = await getUserPermissions(user_id, table)
   if(permsUserEncrypted.includes(analysis_id)){
     return true
   }else{ 
@@ -67,8 +67,10 @@ async function checkIfHasAccessToAnalysis(analysis_id, user_id){
  * @param {*} user_id 
  * @returns permissions for that user
  */
-async function getUserPermissions(user_id){
-  var permsUser = await client.query('SELECT permissions FROM patients WHERE id = $1;', [user_id])
+async function getUserPermissions(user_id, table){
+  console.log("checking permissions for user: " + user_id)
+  var queryString = "SELECT permissions FROM "+table+" WHERE id = "+user_id+";"
+  var permsUser = await client.query(queryString)
   console.log(permsUser.rows[0].permissions)
   var permsEncrypted = permsUser.rows[0].permissions
   if(permsEncrypted == null){
@@ -84,13 +86,15 @@ async function getUserPermissions(user_id){
 
 /**
  * CAREFUL: it does not check if analysis is already there
+ * nor does it check if the user exists
  * 
  * @param {*} analysis_id 
  * @param {*} user_id 
  */
 async function addAnalysisToPermissions(analysis_id, user_id, table){
   try{
-    var permsUser = await getUserPermissions(user_id)
+    console.log("adding analysis to permissions to user: " + user_id + "in table" + table)
+    var permsUser = await getUserPermissions(user_id, table)
     if(permsUser == ""){ var newPermsUser = analysis_id+"-" }
     else{ var newPermsUser = permsUser+analysis_id+"-" }
 
@@ -132,30 +136,6 @@ async function askUpdateFromLab(){
   catch(error){
     console.error(error)
   }
-  
-  //var res = axios.get('http://192.168.1.4:5000/test')
-  //      .then(res => { return res || [] })
-  //      .catch(error => { return error });
-  //res.then(function(result){
-  //  //console.log(result.data)
-  //  const verification = processResult(result.data) 
-  //  if(verification != false){
-  //    // stores the analysis 
-  //    storeResult(result.data, verification)
-  //      .then(response => { 
-  //        console.log(response)
-  //        var analysis_id_string = response.toString()
-  //        // stores permissions
-  //        storeAnalysisPermissionsUser(analysis_id_string, verification, 'patients')
-  //      })
-  //      .catch(error => {
-  //        console.error(error)
-  //      }) 
-  //  } else {
-  //    console.log("verification failed")
-  //  }
-  //  return true
-  //})
 }
 
 
@@ -246,7 +226,7 @@ async function storeAnalysisPermissionsUser(analysis_id, user_id, table){
   console.log("storing permissions in user: "+ user_id)
   try{
     console.log(analysis_id)
-    var hasAlreadyAccess = await checkIfHasAccessToAnalysis(analysis_id, user_id)
+    var hasAlreadyAccess = await checkIfHasAccessToAnalysis(analysis_id, user_id, table)
     if( hasAlreadyAccess == true) {
       console.log("already had access")
       return true 
@@ -294,7 +274,7 @@ async function permissionsToList(permissions){
  */
 async function showListAnalysisFromUser(user_id){
   try{
-    var permsUser = await getUserPermissions(user_id)
+    var permsUser = await getUserPermissions(user_id, 'patients')
     if( permsUser == "") return [] // if no permissions
     var permsList = await permissionsToList(permsUser)
     console.log("list of permissions: ")
@@ -354,6 +334,20 @@ async function checkIfAnalysisExists(analysis_id){
     console.error(error)
     console.log("no analysis with that ID")
   }
+}
+
+
+/**
+ * Adds permission to see analysis to a given doctor
+ * 
+ * @param {*} analysis_id 
+ * @param {*} user_id 
+ */
+async function addPermissionsToDoctors(analysis_id, doctor_id){
+  console.log("adding permissions to doctor: " + doctor_id)
+  if(checkIfAnalysisExists(analysis_id) == false) {console.log("no such analysis"); return false}
+  if(checkIfDoctorExists(doctor_id) == false) {console.log("no such doctor"); return false}
+  addAnalysisToPermissions(analysis_id, doctor_id, 'doctors')
 }
 
 
@@ -451,6 +445,7 @@ module.exports = {
   getUserById,
   processResult,
   storeResult,
+  addPermissionsToDoctors,
   storeAnalysisPermissionsUser,
   storeAnalysisPermissionsDoctor,
   checkIfAnalysisExists,

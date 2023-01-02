@@ -63,9 +63,9 @@ app.get('/register', checkNotAuthenticated, (request, response) => {
   response.render("register", { })
 })
 
-
 // register users actual functionality
 app.post('/register', checkNotAuthenticated, register);
+
 
 // render login page
 app.get('/login', checkNotAuthenticated, (request, response) => {
@@ -76,6 +76,22 @@ app.get('/doctor/profile', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     response.render('profile', { name: user.name })
   })
+})
+
+app.get('/doctor/analysis', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    aux.showListAnalysisFromDoctor(user.id)
+    .then(result => {
+      response.render("analysis", {user: user, data: result})
+    })
+    .catch(error => {
+      console.error(error)
+    })
+  })
+})
+
+app.get('/doctor/analysis/update', checkAuthenticated, (request, response) => {
+  response.redirect('/doctor/analysis');
 })
 
 // login users fucntionality

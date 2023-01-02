@@ -27,11 +27,11 @@
       <form action="/user/analysis/permissions" method="POST">
         <div class="mt-3 form-group">
           <label for="analysisResultID">Analysis Result ID</label>
-          <input type="text" class="form-control" id="analysisResultID" placeholder="Enter analysis result ID" required>
+          <input type="text" class="form-control" id="analysisResultID" name="analysis_id" placeholder="Enter analysis ID" required>
         </div>
         <div class="mt-3 form-group">
-          <label for="doctorsName">Password</label>
-          <input type="text" class="form-control" id="doctorsName" placeholder="Enter your doctor's name" required>
+          <label for="doctorsName">Doctor Id</label>
+          <input type="text" class="form-control" id="doctorsName" name="doctors_id" placeholder="Enter your doctor's ID" required>
           <small class="form-text text-muted">Only grant access to doctors you know and trust.</small>
         </div>
         <div class="mt-3 form-check">

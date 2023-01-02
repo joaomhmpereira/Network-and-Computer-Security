@@ -144,22 +144,22 @@ app.get('/user/analysis/permissions', checkAuthenticated, (request, response) =>
 })
 
 app.post('/user/analysis/permissions', checkAuthenticated, (request, response) => {
-  // const { name, cc, email, password } =  req.body;
-  // console.log(req.body)
-})
-
-
-/**
- * here the client can give the doctor's permissions to see they're analysis
- */
-app.get('/user/analysis/permissions', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    aux.checkIfHasAccessToAnalysis(1, user.id)
-    .then(response => {
-      console.log("response: " + response)
+    const { analysis_id, doctors_id } =  request.body;
+    console.log('Analysis id: ' +analysis_id + ' docs id: ' + doctors_id)
+    aux.addPermissionsToDoctors(analysis_id, doctors_id)
+    .then(result => {
+      // just so we can get the analysis to show in the render 
+      aux.showListAnalysisFromUser(user.id)
+      .then(result => {
+        response.render("analysis", {user: user, data: result})
+      })
+      .catch(error => {
+        console.error(error)
+      })
     })
     .catch(error => {
-      console.error(error)
+      console.log(error)
     })
   })
 })

@@ -48,7 +48,8 @@ function prepareResult(patientID){
 
 	// fetch data from labs database ...
 
-	const result = "HIV Test result: Positive"
+	//const result = "HIV Test result: Positive"
+	const result = "IQ test: 161"
 	const encryptedResult = crypto.publicEncrypt({
 		key: hospitalPubKey,
 		padding: crypto.constants.RSA_PKCS1_OAEP_PADDING,
