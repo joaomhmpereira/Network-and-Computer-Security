@@ -6,7 +6,7 @@ const app = express()
 
 
 const PORT = 5000
-const host = '192.168.1.4'
+const host = '192.168.2.4'
 const labName = 'Joaquim Chaves'
 
 //const decrypted = crypto.privateDecrypt(hospitalPrivKey, encrypted)
@@ -41,9 +41,9 @@ app.listen(PORT, host, ()=>{
  * }
  */
 function prepareResult(patientID){
-	if(patientID != 1){
-		return {"result": "No results for provided patientID"}
-	}
+	//if(patientID != 1){
+	//	return {"result": "No results for provided patientID"}
+	//}
 
 	const hospitalPubKey = fs.readFileSync("../utils/keys/public.key", "utf-8")
 	//const hospitalPrivKey = fs.readFileSync("../utils/keys/private_key.pem", "utf-8")

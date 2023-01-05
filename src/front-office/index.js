@@ -44,7 +44,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 const PORT = 8080
-const host = '192.168.1.4'
+const host = '192.168.2.4'
 const hospitalPrivKey = fs.readFileSync("../utils/keys/private_key.pem")
 const hospitalPubKey = fs.readFileSync("../utils/keys/public.key")
 
@@ -56,6 +56,7 @@ const options = {
 
 // set EJS as view engine
 app.set('view engine', 'ejs')
+app.use(express.static("public"));
 app.use(helmet());
 app.use(bodyParser.json())
 
@@ -81,7 +82,7 @@ app.get('/login', checkNotAuthenticated, (request, response) => {
 // login users fucntionality
 // dava jeito conseguir dar log dos users que dao login
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
-  successRedirect: '/user/appointments',  // login successful -> redirect to appointments
+  successRedirect: '/user/profile',  // login successful -> redirect to appointments
   failureRedirect: '/login',              // login unsuccessful -> redirect to login again
   failureFlash: true                      // if login is unsuccessful display error message
 }));
@@ -104,7 +105,7 @@ app.get('/user/appointments', checkAuthenticated, (request, response) => {
 // load profile page
 app.get('/user/profile', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    response.render("profile", { name : user.name })
+    response.render("profile", { user : user })
   })
 })
 
@@ -119,10 +120,11 @@ app.get('/user/analysis', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     aux.showListAnalysisFromUser(user.id)
     .then(result => {
+      fo_accessLogger.info("User '" + user.id + "' (" + user.email + ") accessed /user/analysis.")
       response.render("analysis", {user: user, data: result})
     })
     .catch(error => {
-      console.error(error)
+      fo_errorLogger.info(error)
     })
   })
 })
@@ -134,7 +136,7 @@ app.get('/user/analysis/update', checkAuthenticated, (request, response) => {
       response.redirect('/user/analysis')
     })
     .catch(error => {
-      console.error(error)
+      fo_errorLogger.info(error)
     })
   })
 })
@@ -146,20 +148,12 @@ app.get('/user/analysis/permissions', checkAuthenticated, (request, response) =>
 app.post('/user/analysis/permissions', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     const { analysis_id, doctors_id } =  request.body;
-    console.log('Analysis id: ' +analysis_id + ' docs id: ' + doctors_id)
-    aux.addPermissionsToDoctors(analysis_id, doctors_id)
+    aux.addPermissionsToDoctors(user, analysis_id, doctors_id)
     .then(result => {
-      // just so we can get the analysis to show in the render 
-      aux.showListAnalysisFromUser(user.id)
-      .then(result => {
-        response.render("analysis", {user: user, data: result})
-      })
-      .catch(error => {
-        console.error(error)
-      })
+      response.redirect('/user/analysis')
     })
     .catch(error => {
-      console.log(error)
+      fo_errorLogger.info(error)
     })
   })
 })
@@ -168,12 +162,13 @@ app.post('/user/analysis/permissions', checkAuthenticated, (request, response) =
 // log user out
 app.get('/logout', checkAuthenticated, function(request, response, next) {
   request.user.then(function(user){
-    fo_accessLogger.info("User '" + user.id + "' (" + user.email + ") logged out.")
+    request.logout(function(err) {
+      if (err) { return next(err); } 
+      fo_accessLogger.info("User '" + user.id + "' (" + user.email + ") logged out.")
+      response.redirect('/login');
+    });
   })
-  request.logout(function(err) {
-    if (err) { return next(err); }    
-    response.redirect('/login');
-  });
+  
 })
 
 /**

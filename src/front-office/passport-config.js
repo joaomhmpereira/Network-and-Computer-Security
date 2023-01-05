@@ -10,14 +10,14 @@ function initialize(passport, getUserByEmail, getUserById) {
     user.then(function(user){
       if (user == null) {
         console.log("User does not exist")
-        return done(null, false, { message: 'No user with that email' })
+        return done(null, false, { message: 'Wrong credentials. Please try again.' })
       }
       try {
         if (bcrypt.compareSync(password, user.password)) {
           fo_accessLogger.info("User '" + user.id + "' (" + user.email + ") logged in.")
           return done(null, user)
         } else {
-          return done(null, false, { message: 'Password incorrect' })
+          return done(null, false, { message: 'Wrong credentials. Please try again.' })
         }
       } catch (e) {
         return done(e)

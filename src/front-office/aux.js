@@ -68,13 +68,10 @@ async function checkIfHasAccessToAnalysis(analysis_id, user_id, table){
  * @returns permissions for that user
  */
 async function getUserPermissions(user_id, table){
-  console.log("checking permissions for user: " + user_id)
   var queryString = "SELECT permissions FROM "+table+" WHERE id = "+user_id+";"
   var permsUser = await client.query(queryString)
-  console.log(permsUser.rows[0].permissions)
   var permsEncrypted = permsUser.rows[0].permissions
   if(permsEncrypted == null){
-    console.log("no permissions for you :(")
     return ""
   } 
   else{ // not null must decrypt
@@ -93,21 +90,16 @@ async function getUserPermissions(user_id, table){
  */
 async function addAnalysisToPermissions(analysis_id, user_id, table){
   try{
-    console.log("adding analysis to permissions to user: " + user_id + "in table" + table)
     var permsUser = await getUserPermissions(user_id, table)
     if(permsUser == ""){ var newPermsUser = analysis_id+"-" }
     else{ var newPermsUser = permsUser+analysis_id+"-" }
 
-    console.log("decrypted perms: " + permsUser)
-    console.log("unencrypted perms: " + newPermsUser)
-    console.log("length of new perms: " + newPermsUser.length )
-
     var newPermsUserEncrypted = await encryptWithHospitalPublicKey(newPermsUser)
     queryString = "UPDATE "+table+" SET permissions = '"+newPermsUserEncrypted+"' WHERE id = "+user_id+";"
-    console.log("query: " + queryString)
     await client.query(queryString)
+    fo_accessLogger.info("User " + user_id + " updated the permissions of analysis " + analysis_id + ".")
   } catch(error){
-    console.error(error)
+    fo_errorLogger.info(error)
   }
 }
 
@@ -122,19 +114,20 @@ async function addAnalysisToPermissions(analysis_id, user_id, table){
  */
 async function askUpdateFromLab(){
   try{
-    var result = await axios.get('http://192.168.1.4:5000/test')
+    var result = await axios.get('http://192.168.2.4:5000/test')
     var verification = processResult(result.data) // true if it all works out
     if(verification != false){
       var response = await storeResult(result.data, verification)
-      console.log(response)
+
       var analysis_id_string = response.toString()
       var store = await storeAnalysisPermissionsUser(analysis_id_string, verification, 'patients')
+      
+      fo_accessLogger.info("Granted patient " + verification + " access to the analysis result.")
       return true
-
     }
   }
   catch(error){
-    console.error(error)
+    fo_errorLogger.info(error)
   }
 }
 
@@ -146,7 +139,6 @@ async function askUpdateFromLab(){
  * @returns the patients id decrypted
  */
 function processResult(result){
-  //console.log(result)
   const labName = result.Lab
   const b64EncodedResult = result.Result
   const b64EncodedPatientID = result.PatientID
@@ -163,7 +155,6 @@ function processResult(result){
     key: labPubKey,
     padding: crypto.constants.RSA_PKCS1_PSS_PADDING,
   }, Buffer.from(signature, 'base64'));
-  console.log("Verified: " + isVerified)
 
   if(!isVerified){ //signature doesn't match
   
@@ -193,16 +184,14 @@ function processResult(result){
  */
 async function storeResult(result, patientId){
   try{
-    console.log("patient id: " + patientId)
     //Inserting data into the database
     var queryResponse = await client.query(`INSERT INTO analysis (id, lab_name, result, signature) VALUES ($1,$2,$3,$4) RETURNING analysis_id;`, 
                                 [result.PatientID, result.Lab, result.Result, result.LabSignature])
     var analysis_id = queryResponse.rows[0].analysis_id
-    console.log("analysis id:")
-    console.log(analysis_id)
+    fo_accessLogger.info("Stored analysis result for patient " + patientId + ".")
     return analysis_id 
   }catch(err){
-    console.error(err.stack)
+    fo_errorLogger.info(err)
   }
 }
 
@@ -216,17 +205,15 @@ async function storeResult(result, patientId){
  * @param {*} user_id 
  */
 async function storeAnalysisPermissionsUser(analysis_id, user_id, table){
-  console.log("storing permissions in user: "+ user_id)
   try{
-    console.log(analysis_id)
     var hasAlreadyAccess = await checkIfHasAccessToAnalysis(analysis_id, user_id, table)
     if( hasAlreadyAccess == true) {
-      console.log("already had access")
+      // user already has access
       return true 
     }
     var res = await addAnalysisToPermissions(analysis_id, user_id, table)
   } catch (error) {
-    console.error(error)
+    fo_errorLogger.info(error)
   }
 }
 
@@ -238,7 +225,7 @@ async function storeAnalysisPermissionsUser(analysis_id, user_id, table){
  * @param {*} doctor_id 
  */
 async function storeAnalysisPermissionsDoctor(analysis_id, doctor_id){
-  if(checkIfDoctorExists(doctor_id)){
+  if(await checkIfDoctorExists(doctor_id)){
     storeAnalysisPermissionsUser(analysis_id, doctor_id, 'doctors')
     return true
   } else{
@@ -254,7 +241,6 @@ async function storeAnalysisPermissionsDoctor(analysis_id, doctor_id){
  */
 async function permissionsToList(permissions){
   var arr = permissions.split("-")
-  console.log(arr)
   return arr
 }
 
@@ -270,17 +256,17 @@ async function showListAnalysisFromUser(user_id){
     var permsUser = await getUserPermissions(user_id, 'patients')
     if( permsUser == "") return [] // if no permissions
     var permsList = await permissionsToList(permsUser)
-    console.log("list of permissions: ")
-    console.log(permsList) 
+
     for(var i=0, listAnalysis = [], permsLength = permsList.length; i<permsLength; i = i+1){
       if(permsList[i] == ''){continue }
       var analysisDecrypted = await getAnalysisDecrypted(permsList[i])
+
       listAnalysis.push(analysisDecrypted)
     }
+
     return listAnalysis
-  }catch(error){
-    console.error(error)
-    console.log("SHOW LIST ANALYSIS")
+  } catch(error){
+    fo_errorLogger.info(error)
   }
 }
 
@@ -304,7 +290,7 @@ async function checkIfDoctorExists(doctor_id){
       return false
     }
   } catch(err){
-    console.error(err.stack)
+    fo_errorLogger.info(err)
   }
 }
 
@@ -324,8 +310,7 @@ async function checkIfAnalysisExists(analysis_id){
       return false
     }
   }catch(error){
-    console.error(error)
-    console.log("no analysis with that ID")
+    fo_errorLogger.info(err)
   }
 }
 
@@ -336,11 +321,16 @@ async function checkIfAnalysisExists(analysis_id){
  * @param {*} analysis_id 
  * @param {*} user_id 
  */
-async function addPermissionsToDoctors(analysis_id, doctor_id){
-  console.log("adding permissions to doctor: " + doctor_id)
-  if(checkIfAnalysisExists(analysis_id) == false) {console.log("no such analysis"); return false}
-  if(checkIfDoctorExists(doctor_id) == false) {console.log("no such doctor"); return false}
-  addAnalysisToPermissions(analysis_id, doctor_id, 'doctors')
+async function addPermissionsToDoctors(user, analysis_id, doctor_id){
+  if(await checkIfAnalysisExists(analysis_id) == false) {
+    fo_accessLogger.info("User " + user.id + " (" + user.email + ") tried to add permissions to an analysis (id: " + analysis_id + ") that doesn't exist.")
+    return false
+  }
+  if(await checkIfDoctorExists(doctor_id) == false) {
+    fo_accessLogger.info("User " + user.id + " (" + user.email + ") tried to add permissions to a doctor (id: " + doctor_id + ") that doesn't exist.")
+    return false
+  }
+  await addAnalysisToPermissions(analysis_id, doctor_id, 'doctors')
 }
 
 
@@ -354,7 +344,7 @@ async function getUserAppointments(id){
     const res = await client.query('SELECT * FROM appointments WHERE patient_id = $1;', [id])
     return res.rows;
   } catch (err) {
-    console.log(err.stack)
+    fo_errorLogger.info(err)
   }
 }
 
@@ -375,7 +365,7 @@ async function getUserByEmail(email){
       return null;
     }
   } catch (err) {
-    console.error(err.stack)
+    fo_errorLogger.info(err)
   }
 }
 
@@ -395,7 +385,7 @@ async function getUserById(id){
       return null;
     }
   } catch (err) {
-    console.error(err.stack)
+    fo_errorLogger.info(err)
   }
 }
 
@@ -420,8 +410,7 @@ async function getAnalysisDecrypted(analysis_id){
       return analysis
     }
   } catch(error){
-    console.error(error)
-    console.log("problem loading the analysis from database")
+    fo_errorLogger.info(error)
   }
 }
 

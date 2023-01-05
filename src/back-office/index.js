@@ -40,7 +40,7 @@ app.use(passport.initialize())
 app.use(passport.session())
 
 const PORT = 8081
-const host = '192.168.1.4'
+const host = '192.168.2.4'
 
 // read private key and certificate for https
 const options = {
@@ -50,6 +50,7 @@ const options = {
 
 // set EJS as view engine
 app.set('view engine', 'ejs')
+app.use(express.static("public"));
 app.use(helmet());
 app.use(bodyParser.json())
 
@@ -74,7 +75,8 @@ app.get('/login', checkNotAuthenticated, (request, response) => {
 
 app.get('/doctor/profile', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
-    response.render('profile', { name: user.name })
+    bo_accessLogger.info("User '" + user.id + "' (" + user.email + ") accessed his/her profile.")
+    response.render('profile', { user: user })
   })
 })
 
@@ -82,20 +84,52 @@ app.get('/doctor/analysis', checkAuthenticated, (request, response) => {
   request.user.then(function(user){
     aux.showListAnalysisFromDoctor(user.id)
     .then(result => {
-      response.render("analysis", {user: user, data: result})
+      const possiblePatients = []
+      if (result.length != 0){
+        result.map((analysis) => {
+          let patientId = analysis.id
+          if(!possiblePatients.includes(patientId)) {possiblePatients.push(patientId)}
+        })
+      }
+      bo_accessLogger.info("User '" + user.id + "' (" + user.email + ") accessed all analysis it has access to.")
+      response.render("analysis", {user: user, data: result, options: possiblePatients})
     })
     .catch(error => {
-      console.error(error)
+      bo_errorLogger.info(error)
     })
   })
 })
+
+app.post('/doctor/analysis/filter', checkAuthenticated, (request, response) => {
+  const { patientId } = request.body
+  const url = '/doctor/analysis/' + patientId.toString()
+  console.log("url: " + url)
+  response.redirect(url)
+})
+
+app.get('/doctor/analysis/:id', checkAuthenticated, (request, response) => {
+  const patientId = parseInt(request.params.id)
+  request.user.then(function(user){
+    aux.showListAnalysisFromDoctor(user.id)
+    .then(result => {
+      result = result.filter(analysis => {
+        return analysis.id == patientId
+      })
+      bo_accessLogger.info("User '" + user.id + "' (" + user.email + ") accessed patient's " + patientId + " analysis results.")
+      response.render("filter_analysis", {user: user, data: result, patient_id: patientId})
+    })
+    .catch(error => {
+      bo_errorLogger.info(error)
+    })
+  })
+})
+
 
 app.get('/doctor/analysis/update', checkAuthenticated, (request, response) => {
   response.redirect('/doctor/analysis');
 })
 
-// login users fucntionality
-// dava jeito conseguir dar log dos users que dao login
+// login users functionality
 app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
   successRedirect: '/doctor/profile',  // login successful -> redirect to appointments
   failureRedirect: '/login',              // login unsuccessful -> redirect to login again
@@ -104,10 +138,13 @@ app.post('/login', checkNotAuthenticated, passport.authenticate('local', {
 
 // log user out
 app.get('/logout', checkAuthenticated, function(request, response, next) {
-  request.logout(function(err) {
-    if (err) { return next(err); }
-    response.redirect('/login');
-  });
+  request.user.then(function(user){
+    request.logout(function(err) {
+      if (err) { return next(err); } 
+      bo_accessLogger.info("User '" + user.id + "' (" + user.email + ") logged out.")
+      response.redirect('/login');
+    });
+  })
 })
 
 /**

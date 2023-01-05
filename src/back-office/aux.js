@@ -1,6 +1,7 @@
 const client = require("../front-office/configs/database")
 const fs = require('fs')
 const crypto = require('crypto')
+const { bo_accessLogger, bo_errorLogger } = require("../front-office/logger")
 
 
 /**
@@ -26,7 +27,6 @@ async function decryptWithHospitalPublicKey(encoded_text){
  */
 async function permissionsToList(permissions){
   var arr = permissions.split("-")
-  console.log(arr)
   return arr
 }
 
@@ -42,8 +42,6 @@ async function showListAnalysisFromDoctor(user_id){
     var permsUser = await getDoctorPermissions(user_id)
     if( permsUser == "") return [] // if no permissions
     var permsList = await permissionsToList(permsUser)
-    console.log("list of permissions: ")
-    console.log(permsList) 
     for(var i=0, listAnalysis = [], permsLength = permsList.length; i<permsLength; i = i+1){
       if(permsList[i] == ''){continue }
       var analysisDecrypted = await getAnalysisDecrypted(permsList[i])
@@ -51,8 +49,7 @@ async function showListAnalysisFromDoctor(user_id){
     }
     return listAnalysis
   }catch(error){
-    console.error(error)
-    console.log("SHOW LIST ANALYSIS")
+    bo_errorLogger.info(error)
   }
 }
 
@@ -65,10 +62,8 @@ async function showListAnalysisFromDoctor(user_id){
  */
 async function getDoctorPermissions(user_id){
   var permsUser = await client.query('SELECT permissions FROM doctors WHERE id = $1;', [user_id])
-  console.log(permsUser.rows[0].permissions)
   var permsEncrypted = permsUser.rows[0].permissions
   if(permsEncrypted == null){
-    console.log("no permissions for you :(")
     return ""
   } 
   else{ // not null must decrypt
@@ -97,8 +92,7 @@ async function getAnalysisDecrypted(analysis_id){
       return analysis
     }
   } catch(error){
-    console.error(error)
-    console.log("problem loading the analysis from database")
+    bo_errorLogger.info(error)
   }
 }
 
@@ -114,13 +108,12 @@ async function getUserByEmail(email){
         email: res.rows[0].email,
         password: res.rows[0].password 
       }
-      console.log(user)
       return user;
     } else {
       return null;
     }
   } catch (err) {
-    console.error(err.stack)
+    bo_errorLogger.info(err)    
   }
 }
 
@@ -139,7 +132,7 @@ async function getUserById(id){
       return null;
     }
   } catch (err) {
-    console.error(err.stack)
+    bo_errorLogger.info(err)    
   }
 }
 
