@@ -10,8 +10,8 @@
 		- PGDATABASE="..."
 		- PGPORT=...
 		- SESSION_SECRET="..."
-		in each field of type `PG...` add the corresponding information corresponding to the 	database PostgreSQL server
-		in the `SESSION_SECRET` field add a random string. This will be used as a salt to each 	session id
+	- in each field of type `PG...` add the corresponding information corresponding to the database PostgreSQL server
+	- in the `SESSION_SECRET` field add a random string. This will be used as a salt to each session id
 	- to start up the frontend run `npm run start` in the `front-office` directory. This will start all 3 servers (front-office, back-office, lab), ports 8080, 8081, and 5000 respectivelly.
 
 **The IP addresses for each VM have to be set up as shown in the report**
