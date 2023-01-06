@@ -16,3 +16,6 @@
 
 **The IP addresses for each VM have to be set up as shown in the report**
 A PostgreSQL has to be created in VM2 (the one with IP 192.168.1.1) and the appropriate files have to be configured in order to accept connections from VM3 (the one with IP 192.168.2.4). This may imply changing configuration files like `/etc/postgresql/12/main/phba.conf`
+
+- **Requirements**:
+	- npm, version: 9.1.3 (we developed using this version, other versions may also work)
