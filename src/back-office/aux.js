@@ -49,7 +49,7 @@ async function showListAnalysisFromDoctor(user_id){
     }
     return listAnalysis
   }catch(error){
-    bo_errorLogger.info(error)
+    bo_errorLogger.error(error)
   }
 }
 
@@ -92,7 +92,7 @@ async function getAnalysisDecrypted(analysis_id){
       return analysis
     }
   } catch(error){
-    bo_errorLogger.info(error)
+    bo_errorLogger.error(error)
   }
 }
 
@@ -113,7 +113,7 @@ async function getUserByEmail(email){
       return null;
     }
   } catch (err) {
-    bo_errorLogger.info(err)    
+    bo_errorLogger.error(err)    
   }
 }
 
@@ -132,7 +132,7 @@ async function getUserById(id){
       return null;
     }
   } catch (err) {
-    bo_errorLogger.info(err)    
+    bo_errorLogger.error(err)    
   }
 }
 

@@ -131,6 +131,26 @@ async function askUpdateFromLab(){
   }
 }
 
+/**
+ * Ask an update to the lab, it will respond with analysis from patient 1
+ */
+async function askEvilUpdateFromLab(){
+  try{
+    var result = await axios.get('http://192.168.2.4:5000/evil')
+    var verification = processResult(result.data) // true if it all works out
+    if(verification != false){
+      var response = await storeResult(result.data, verification)
+      var analysis_id_string = response.toString()
+      var store = await storeAnalysisPermissionsUser(analysis_id_string, verification, 'patients')
+      fo_accessLogger.info("Granted patient " + verification + " access to the analysis result.")
+      return true
+    }
+  }
+  catch(error){
+    fo_errorLogger.info(error)
+  }
+}
+
 
 /**
  * verifies the signature and returns the patients id decrypted
@@ -157,9 +177,8 @@ function processResult(result){
   }, Buffer.from(signature, 'base64'));
 
   if(!isVerified){ //signature doesn't match
-  
+    fo_errorLogger.error(`Received analysis from lab ${labName} where signature doesn't match. Discarding analysis.`)
     return false
-  
   } else {
     const decryptedPatientID = crypto.privateDecrypt({
       key: hospitalPrivKey,
@@ -213,7 +232,7 @@ async function storeAnalysisPermissionsUser(analysis_id, user_id, table){
     }
     var res = await addAnalysisToPermissions(analysis_id, user_id, table)
   } catch (error) {
-    fo_errorLogger.info(error)
+    fo_errorLogger.error(error)
   }
 }
 
@@ -266,7 +285,7 @@ async function showListAnalysisFromUser(user_id){
 
     return listAnalysis
   } catch(error){
-    fo_errorLogger.info(error)
+    fo_errorLogger.error(error)
   }
 }
 
@@ -290,7 +309,7 @@ async function checkIfDoctorExists(doctor_id){
       return false
     }
   } catch(err){
-    fo_errorLogger.info(err)
+    fo_errorLogger.error(err)
   }
 }
 
@@ -310,7 +329,7 @@ async function checkIfAnalysisExists(analysis_id){
       return false
     }
   }catch(error){
-    fo_errorLogger.info(err)
+    fo_errorLogger.error(err)
   }
 }
 
@@ -344,7 +363,7 @@ async function getUserAppointments(id){
     const res = await client.query('SELECT * FROM appointments WHERE patient_id = $1;', [id])
     return res.rows;
   } catch (err) {
-    fo_errorLogger.info(err)
+    fo_errorLogger.error(err)
   }
 }
 
@@ -365,7 +384,7 @@ async function getUserByEmail(email){
       return null;
     }
   } catch (err) {
-    fo_errorLogger.info(err)
+    fo_errorLogger.error(err)
   }
 }
 
@@ -385,7 +404,7 @@ async function getUserById(id){
       return null;
     }
   } catch (err) {
-    fo_errorLogger.info(err)
+    fo_errorLogger.error(err)
   }
 }
 
@@ -410,7 +429,7 @@ async function getAnalysisDecrypted(analysis_id){
       return analysis
     }
   } catch(error){
-    fo_errorLogger.info(error)
+    fo_errorLogger.error(error)
   }
 }
 
@@ -423,6 +442,7 @@ module.exports = {
   getUserPermissions,
   getUserAppointments,
   askUpdateFromLab,
+  askEvilUpdateFromLab,
   getUserByEmail,
   getUserById,
   processResult,

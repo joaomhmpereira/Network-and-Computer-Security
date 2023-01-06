@@ -14,7 +14,7 @@ const session = require('express-session')
 const axios = require('axios')
 const aux = require("./aux")
 const { register } = require("./register")
-const { fo_accessLogger, fo_errorLogger } = require("./logger")
+const { fo_accessLogger, fo_errorLogger} = require("./logger")
 
 // passport configuration
 const initializePassport = require('./passport-config')
@@ -124,7 +124,7 @@ app.get('/user/analysis', checkAuthenticated, (request, response) => {
       response.render("analysis", {user: user, data: result})
     })
     .catch(error => {
-      fo_errorLogger.info(error)
+      fo_errorLogger.error(error)
     })
   })
 })
@@ -136,7 +136,19 @@ app.get('/user/analysis/update', checkAuthenticated, (request, response) => {
       response.redirect('/user/analysis')
     })
     .catch(error => {
-      fo_errorLogger.info(error)
+      fo_errorLogger.error(error)
+    })
+  })
+})
+
+app.get('/user/analysis/evil_update', checkAuthenticated, (request, response) => {
+  request.user.then(function(user){
+    aux.askEvilUpdateFromLab()
+    .then(result => {
+      response.redirect('/user/analysis')
+    })
+    .catch(error => {
+      fo_errorLogger.error(error)
     })
   })
 })
@@ -153,7 +165,7 @@ app.post('/user/analysis/permissions', checkAuthenticated, (request, response) =
       response.redirect('/user/analysis')
     })
     .catch(error => {
-      fo_errorLogger.info(error)
+      fo_errorLogger.error(error)
     })
   })
 })

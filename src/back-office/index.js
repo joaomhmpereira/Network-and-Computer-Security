@@ -95,7 +95,7 @@ app.get('/doctor/analysis', checkAuthenticated, (request, response) => {
       response.render("analysis", {user: user, data: result, options: possiblePatients})
     })
     .catch(error => {
-      bo_errorLogger.info(error)
+      bo_errorLogger.error(error)
     })
   })
 })
@@ -119,7 +119,7 @@ app.get('/doctor/analysis/:id', checkAuthenticated, (request, response) => {
       response.render("filter_analysis", {user: user, data: result, patient_id: patientId})
     })
     .catch(error => {
-      bo_errorLogger.info(error)
+      bo_errorLogger.error(error)
     })
   })
 })
