@@ -1,6 +1,6 @@
 # SIRS - SAH Healthcare
 
-Instructions to run the project:
+- Instructions to run the project:
 	- all development was done in the SEED Labs VM so the required platform is: Linux 64-bit, Ubuntu
 	- run command `npm i` on the directories 'front-office', 'back-office' and 'lab' to install all the node modules used
 	- and `.env` files to directories 'front-office' and 'back-office' with the following structure:
