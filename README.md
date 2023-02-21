@@ -1,6 +1,17 @@
-# SIRS - SAH Healthcare
+# Network and Computer Security - SAH Healthcare
 
-- Instructions to run the project:
+This repository contains work developed in the Network and Computer Security masters course @ IST.
+
+The project scenario specification can be found [here](https://github.com/tecnico-sec/Project-Scenarios-2023_1#5-healthcare-sah)
+
+Author | Github
+-------|-------
+João Pereira     | https://github.com/joaomhmpereira
+José Afonso      | https://github.com/zezeafonso
+
+Frontend: EJS, Backend: NodeJS, DB: PostgreSQL
+
+- **Instructions to run the project**:
 	- all development was done in the SEED Labs VM so the required platform is: Linux 64-bit, Ubuntu
 	- run command `npm i` on the directories 'front-office', 'back-office' and 'lab' to install all the node modules used
 	- and `.env` files to directories 'front-office' and 'back-office' with the following structure:
